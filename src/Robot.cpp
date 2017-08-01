@@ -7,26 +7,41 @@
 #include <SmartDashboard/SendableChooser.h>
 #include <SmartDashboard/SmartDashboard.h>
 #include <Lib830.h>
+#include "input/GamepadF310.h"
+
+using namespace Lib830;
 
 class Robot: public frc::IterativeRobot {
 public:
+	static const int LEFT_PWM_ONE = 0; //placeholder
+	static const int LEFT_PWM_TWO = 0; //placeholder
+	static const int RIGHT_PWM_ONE = 0; //placeholder
+	static const int RIGHT_PWM_TWO = 0; //placeholder
+
+	RobotDrive * drive;
+
+	GamepadF310 * pilot;
+	GamepadF310 * copilot;
+
+	static const int TICKS_TO_ACCEL = 15;
+	float previousSpeed = 0;
+
 	void RobotInit() {
+		drive = new RobotDrive(
+					new VictorSP(LEFT_PWM_ONE),
+					new VictorSP(LEFT_PWM_TWO),
+					new VictorSP(RIGHT_PWM_ONE),
+					new VictorSP(RIGHT_PWM_TWO)
+		);
+
+		pilot = new GamepadF310(0);
+		copilot = new GamepadF310(1);
+
 		chooser.AddDefault(autoNameDefault, autoNameDefault);
 		chooser.AddObject(autoNameCustom, autoNameCustom);
 		frc::SmartDashboard::PutData("Auto Modes", &chooser);
 	}
 
-	/*
-	 * This autonomous (along with the chooser code above) shows how to select
-	 * between different autonomous modes using the dashboard. The sendable
-	 * chooser code works with the Java SmartDashboard. If you prefer the
-	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-	 * GetString line to get the auto name from the text box below the Gyro.
-	 *
-	 * You can add additional auto modes by adding additional comparisons to the
-	 * if-else structure below with additional strings. If using the
-	 * SendableChooser make sure to add them to the chooser code above as well.
-	 */
 	void AutonomousInit() override {
 		autoSelected = chooser.GetSelected();
 		// std::string autoSelected = SmartDashboard::GetString("Auto Selector", autoNameDefault);
@@ -53,6 +68,17 @@ public:
 
 	void TeleopPeriodic() {
 
+		float targetSpeed = pilot->LeftY();
+
+		if (fabs(targetSpeed) < 0.13) {
+			targetSpeed = 0;
+		}
+
+		float speed = accel(targetSpeed, previousSpeed, TICKS_TO_ACCEL);
+		previousSpeed = speed;
+
+		float turn = pilot->RightX();
+		drive->ArcadeDrive(speed,turn);
 	}
 
 	void TestPeriodic() {
