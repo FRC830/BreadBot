@@ -18,10 +18,15 @@ public:
 	static const int RIGHT_PWM_ONE = 0; //placeholder
 	static const int RIGHT_PWM_TWO = 0; //placeholder
 
+	static const int SOLENOID_PCM = 0;
+
 	RobotDrive * drive;
 
 	GamepadF310 * pilot;
 	GamepadF310 * copilot;
+
+	Solenoid *solenoid;
+
 
 	static const int TICKS_TO_ACCEL = 15;
 	float previousSpeed = 0;
@@ -40,6 +45,9 @@ public:
 		chooser.AddDefault(autoNameDefault, autoNameDefault);
 		chooser.AddObject(autoNameCustom, autoNameCustom);
 		frc::SmartDashboard::PutData("Auto Modes", &chooser);
+
+		solenoid = new Solenoid (SOLENOID_PCM);
+
 	}
 
 	void AutonomousInit() override {
@@ -79,6 +87,14 @@ public:
 
 		float turn = pilot->RightX();
 		drive->ArcadeDrive(speed,turn);
+
+		if (pilot->ButtonState(GamepadF310::BUTTON_B)) {
+			solenoid->Set(true);
+		}
+		else {
+			solenoid->Set(false);
+			//hjuk
+		}
 	}
 
 	void TestPeriodic() {
